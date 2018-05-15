@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="16dp"
+        android:text="Capture" />
+
+    <RadioGroup
+        android:layout_width="175dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/capture"
+        android:layout_toEndOf="@+id/capture"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/Imode"
+            android:layout_width="15dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="I" />
+
+        <RadioButton
+            android:id="@+id/Smode"
+            android:layout_width="15dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="S" />
+
+        <RadioButton
+            android:id="@+id/Mmode"
+            android:layout_width="15dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="M" />
+
+        <RadioButton
+            android:id="@+id/Amode"
+            android:layout_width="15dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="A" />
+
+    </RadioGroup>
+
+    <SeekBar
+        android:id="@+id/seekBarIso"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/capture"
+        android:layout_alignParentEnd="true"
+        android:max="7"
+        android:progress="1" />
+
+    <Button
+        android:id="@+id/btnSS"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/capture"
+        android:text="SS" />
+
+    <Button
+        android:id="@+id/btnISO"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/seekBarIso"
+        android:layout_alignTop="@+id/capture"
+        android:text="ISO" />
+
+    <SeekBar
+        android:id="@+id/seekBarSS"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/capture"
+        android:layout_alignParentEnd="true"
+        android:max="10"
+        android:progress="1" />
+
+    <TextureView
+        android:id="@+id/textureView"
+        android:layout_width="280dp"
+        android:layout_height="420dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:id="@+id/textSS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/capture"
+        android:layout_toStartOf="@+id/seekBarIso"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/textISO"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/capture"
+        android:layout_toStartOf="@+id/seekBarIso"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/labelScene"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/capture"
+        android:layout_alignEnd="@+id/capture"
+        android:text="SceneMode:" />
+
+    <RadioGroup
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/seekBarIso"
+        android:layout_toEndOf="@+id/capture"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/stageMode"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Stage" />
+
+        <RadioButton
+            android:id="@+id/monoMode"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Mono" />
+    </RadioGroup>
+</RelativeLayout>
