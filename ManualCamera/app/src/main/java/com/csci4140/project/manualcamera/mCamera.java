@@ -3,8 +3,6 @@ package com.csci4140.project.manualcamera;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -26,7 +24,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
-import android.view.SurfaceView;
 import android.view.TextureView;
 
 import java.io.File;
@@ -43,69 +40,65 @@ public class mCamera {
     private Context mainContext;
     private String cameraId;
     private CameraDevice cameraDevice;
-    private CaptureRequest.Builder captureRequestBuilder;
+    private CaptureRequest.Builder previewBuilder;
     private TextureView textureView;
-    private SurfaceView surfaceView;
     private Size imageDimension;
     private ImageReader imageReader;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private int isStopPreview = 0;
+    int oldIso=100;
+    long oldSs=20000000;
+    int previewMode = 0;
+    int oldScene = 1;
+    Integer fNo = 1;
 
     public void initCame(Context iContext,TextureView mtextureView) {
         mainContext = iContext;
         textureView = mtextureView;
-        textureView.setSurfaceTextureListener(textureListener);
-        /*orientations.append(Surface.ROTATION_0, 90);
-        orientations.append(Surface.ROTATION_90, 0);
-        orientations.append(Surface.ROTATION_180, 270);
-        orientations.append(Surface.ROTATION_270, 180);*/
-        //rotation = mrotation;
-    }
+        mtextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                try {
+                    CameraManager manager = (CameraManager) mainContext.getSystemService(Context.CAMERA_SERVICE);
+                    cameraId = manager.getCameraIdList()[0];
+                    CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+                    StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                    imageDimension = map.getOutputSizes(SurfaceTexture.class)[0]; // need to modify to custom sizes
+                    if (ActivityCompat.checkSelfPermission(mainContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return;
+                    }
+                    manager.openCamera(cameraId, stateCallback, null);
 
-    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            try {
-                CameraManager manager = (CameraManager) mainContext.getSystemService(Context.CAMERA_SERVICE);
-                cameraId = manager.getCameraIdList()[0];
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                imageDimension = map.getOutputSizes(SurfaceTexture.class)[0]; // need to modify to custom sizes
-                if (ActivityCompat.checkSelfPermission(mainContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                } catch (CameraAccessException e) {
+                    e.printStackTrace();
                 }
-                manager.openCamera(cameraId, stateCallback, null);
-                Log.e("cam","run open camera");
 
-            } catch (CameraAccessException e) {
-                Log.e("cam","Camera open error");
-                e.printStackTrace();
             }
-        }
 
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
 
-        }
+            }
 
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            return false;
-        }
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                return false;
+            }
 
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+            @Override
+            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 
-        }
-    };
+            }
+        });
+    }
 
     void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("Camera Thread");
@@ -127,9 +120,8 @@ public class mCamera {
     final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
-            Log.e("cam", "openCamera");
             cameraDevice = camera;
-            createCameraPreview();
+            createCameraPreview(0,100,20000000,oldScene);
         }
 
         @Override
@@ -157,23 +149,64 @@ public class mCamera {
         }
     }
 
-    void createCameraPreview() {
-        Log.e("cam","create preview");
+    public void createCameraPreview(int previewMode,int niso,long nss,int scene) {
         try {
-            // set the data dimension that send to the preview
             SurfaceTexture texture = textureView.getSurfaceTexture();
-            //texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             texture.setDefaultBufferSize(1280, 720);
             Surface surface = new Surface(texture);
 
-            // configure the preview setting
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-            //captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
-            //captureRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,(long) 20000000);
-            //captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,64);
-            captureRequestBuilder.addTarget(surface);      // previewReader.getSurface()
-            // really do the capture
+            previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            previewBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            if (scene==2) {
+                previewBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE,CameraMetadata.CONTROL_EFFECT_MODE_MONO);
+            }
+            if (previewMode==1) {
+                previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                previewBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,oldSs);
+                previewBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,oldIso);
+            }
+            else if (previewMode==2) {
+                previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                previewBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,oldSs);
+            }
+            else if (previewMode==3) {
+                previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                previewBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,oldIso);
+            }
+            else if (previewMode==4) {
+                previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_ON);
+                previewBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,-6);
+            }
+            else if (previewMode==5) {
+                previewBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE,CameraMetadata.CONTROL_EFFECT_MODE_MONO);
+            }
+            else if (previewMode>6) {
+                previewMode = previewMode - 6;
+                if (previewMode==1) {
+                    previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                    previewBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,oldSs);
+                    previewBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,oldIso);
+                    Log.e("enter mode 1 in mode 6","end");
+                }
+                else if (previewMode==2) {
+                    previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                    previewBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,oldSs);
+                }
+                else if (previewMode==3) {
+                    previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_OFF);
+                    previewBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,oldIso);
+                }
+                else if (previewMode==4) {
+                    previewBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_ON);
+                    previewBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,-6);
+                }
+                else if (previewMode==5) {
+                    previewBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE,CameraMetadata.CONTROL_EFFECT_MODE_MONO);
+                }
+                Integer temp = oldIso;
+                Log.e("enter mode 6, oldSs",temp.toString());
+            }
+            previewBuilder.addTarget(surface);
 
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
@@ -182,7 +215,7 @@ public class mCamera {
                         return;
                     }
                     try {
-                        session.setRepeatingRequest(captureRequestBuilder.build(),null,mBackgroundHandler);
+                        session.setRepeatingRequest(previewBuilder.build(),null,mBackgroundHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -197,11 +230,13 @@ public class mCamera {
         }
     }
 
-    void takePicture(int captureMode,int iso,long ss) {
+    void takePicture(int captureMode,int iso,long ss,int scene) {
         if (cameraDevice == null) {
-            Log.e("Cam", "No camera Device");
             return;
         }
+        oldIso = iso;
+        oldSs = ss;
+        oldScene = scene;
         CameraManager manager = (CameraManager) mainContext.getSystemService(Context.CAMERA_SERVICE);
         try {
             CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraDevice.getId());
@@ -209,22 +244,26 @@ public class mCamera {
             if (cameraCharacteristics != null) {
                 jpegSizes = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getHighResolutionOutputSizes(ImageFormat.JPEG);
             }
-            int width = 1280;
-            int height = 720;
-            // set image dimension
+            int height;
+            int width;
             if (jpegSizes != null && 0 < jpegSizes.length) {
-                width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
+                width = jpegSizes[0].getWidth();
             }
-            // set a image reader and the output surfaces(image and preview)
+            else {
+                height = 720;
+                width = 1280;
+            }
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
-            // Configure a capture request
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(reader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            if (scene==2) {
+                captureBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE,CameraMetadata.CONTROL_EFFECT_MODE_MONO);
+                Log.e("cam","set mono");
+            }
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION));
             switch (captureMode) {
                 case 0:
@@ -244,7 +283,7 @@ public class mCamera {
                     break;
                 case 4:
                     captureBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_ON);
-                    captureBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,-2);
+                    captureBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,-6);
                     break;
                 case 5:
                     captureBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE,CameraMetadata.CONTROL_EFFECT_MODE_MONO);
@@ -252,13 +291,15 @@ public class mCamera {
                 case 6:
                     break;
             }
-            //captureBuilder.set(CaptureRequest.CONTROL_AE_MODE,CameraMetadata.CONTROL_AE_MODE_ON);
-            //captureBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME,(long) 20000000);
-            //captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY,200);
-            //captureBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,-2);
-            // this code set how to save the image
-            final File file = new File(Environment.getExternalStorageDirectory() + "/test.jpg");
-            Log.e("cam",Environment.getExternalStorageDirectory().toString());
+            captureBuilder.addTarget(reader.getSurface());
+
+            File dir = new File(Environment.getExternalStorageDirectory() + "/DCIM");
+            if(dir.exists() && dir.isDirectory()) {
+                Log.e("Image Directory ","exist");
+            } else {
+                dir.mkdir();
+            }
+            final File file = new File(Environment.getExternalStorageDirectory() + "/DCIM/_DSC"+fNo.toString()+".jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
@@ -272,6 +313,7 @@ public class mCamera {
 
                         try {
                             output = new FileOutputStream(file);
+                            fNo = fNo+1;
                             output.write(bytes);
                         } catch (FileNotFoundException e) {
                             e.printStackTrace();
@@ -294,29 +336,32 @@ public class mCamera {
                 }
             };
 
-            if(captureMode!=6) {
+            if(captureMode<6) {
                 reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
                 isStopPreview = 0;
+                previewMode = captureMode;
             }
             else {
+                reader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+                    @Override
+                    public void onImageAvailable(ImageReader reader) {
+                        Log.e("No thing","saved");
+
+                    }
+                },mBackgroundHandler);
                 isStopPreview = 1;
+                previewMode = captureMode;
             }
-            // This Listener is for the job to do after capture
+
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Log.e("cam", "image saved");
-                    if (isStopPreview==0) {
-                        createCameraPreview();
-                    }
+
+                    createCameraPreview(previewMode,100,20000000,oldScene);
                 }
             };
 
-            // This part really do the capture part
-            // capture builder is the capture setting
-            // captureListener state the thing to be done after capture
-            // mBackgroundHandler is the background thread for that capture
             cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {

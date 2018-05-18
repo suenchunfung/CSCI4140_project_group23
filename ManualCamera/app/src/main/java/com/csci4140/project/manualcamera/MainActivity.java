@@ -15,7 +15,8 @@ public class MainActivity extends AppCompatActivity {
     int captureMode = 0; // 0 for auto, 1 for M, 2 for S, 3 for I
     int iso = 100;
     long ss = 312500;
-    private mCamera camera1 = new mCamera();
+    private mCamera mcamera = new mCamera();
+    int scene = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
         textISO.setVisibility(View.INVISIBLE);
         textSS.setVisibility(View.INVISIBLE);
 
+        Button btnConfig = (Button) findViewById(R.id.btnConfig);
+        btnConfig.setVisibility(View.INVISIBLE);
         RadioButton Imode = (RadioButton) findViewById(R.id.Imode);
         RadioButton Smode = (RadioButton) findViewById(R.id.Smode);
         RadioButton Mmode = (RadioButton) findViewById(R.id.Mmode);
@@ -38,8 +41,19 @@ public class MainActivity extends AppCompatActivity {
         Amode.setOnCheckedChangeListener(captureModeSwitchListener);
         RadioButton stageMode = (RadioButton) findViewById(R.id.stageMode);
         RadioButton monoMode = (RadioButton) findViewById(R.id.monoMode);
+        RadioButton Nscene = (RadioButton) findViewById(R.id.Nscene);
         stageMode.setOnCheckedChangeListener(sceneMode);
         monoMode.setOnCheckedChangeListener(sceneMode);
+        Nscene.setOnCheckedChangeListener(sceneMode);
+
+        //Set btnConfig
+        btnConfig.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mcamera.takePicture(captureMode+6,iso,ss,scene);
+                //mcamera.createCameraPreview(captureMode,iso,ss);
+            }
+        });
 
         //set listener on ISO value
         //set listener on SS value
@@ -106,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
                 TextView textSS = (TextView) findViewById(R.id.textSS);
                 textISO.setVisibility(View.VISIBLE);
                 textSS.setVisibility(View.INVISIBLE);
+                Button btnConfig = (Button) findViewById(R.id.btnConfig);
+                btnConfig.setVisibility(View.VISIBLE);
             }
         });
         btnSS.setOnClickListener(new View.OnClickListener() {
@@ -119,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
                 TextView textSS = (TextView) findViewById(R.id.textSS);
                 textISO.setVisibility(View.INVISIBLE);
                 textSS.setVisibility(View.VISIBLE);
+                Button btnConfig = (Button) findViewById(R.id.btnConfig);
+                btnConfig.setVisibility(View.VISIBLE);
             }
         });
 
@@ -127,7 +145,9 @@ public class MainActivity extends AppCompatActivity {
         btnCapture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                camera1.takePicture(captureMode,iso,ss);
+                mcamera.takePicture(captureMode,iso,ss,scene);
+                Integer temp = scene;
+                Log.e("main scene:",temp.toString());
             }
         });
 
@@ -135,8 +155,7 @@ public class MainActivity extends AppCompatActivity {
         //Set Camera
         TextureView textureView = (TextureView) findViewById(R.id.textureView);
         assert textureView != null;
-        camera1.initCame(this,textureView);
-        textureView.setSurfaceTextureListener(camera1.textureListener);
+        mcamera.initCame(this,textureView);
 
     }
 
@@ -145,6 +164,8 @@ public class MainActivity extends AppCompatActivity {
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             Button btnISO = (Button) findViewById(R.id.btnISO);
             Button btnSS = (Button) findViewById(R.id.btnSS);
+            Button btnConfig = (Button) findViewById(R.id.btnConfig);
+            btnConfig.setVisibility(View.INVISIBLE);
             if (isChecked) {
                 SeekBar sbarISO = (SeekBar) findViewById(R.id.seekBarIso);
                 SeekBar sbarSS = (SeekBar) findViewById(R.id.seekBarSS);
@@ -188,6 +209,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if(isChecked) {
+                Button btnConfig = (Button) findViewById(R.id.btnConfig);
+                btnConfig.setVisibility(View.INVISIBLE);
                 Button btnISO = (Button) findViewById(R.id.btnISO);
                 Button btnSS = (Button) findViewById(R.id.btnSS);
                 SeekBar sbarISO = (SeekBar) findViewById(R.id.seekBarIso);
@@ -205,8 +228,13 @@ public class MainActivity extends AppCompatActivity {
                         captureMode = 4;
                         break;
                     case R.id.monoMode:
-                        captureMode = 5;
+                        scene = 2;
+                        mcamera.takePicture(captureMode+6,iso,ss,scene);
                         break;
+                    case R.id.Nscene:
+                        scene = 1;
+
+                        mcamera.takePicture(captureMode+6,iso,ss,scene);
                 }
             }
         }

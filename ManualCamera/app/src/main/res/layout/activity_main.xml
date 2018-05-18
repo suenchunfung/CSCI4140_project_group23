@@ -19,7 +19,7 @@
         android:layout_width="175dp"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/capture"
-        android:layout_toEndOf="@+id/capture"
+        android:layout_toStartOf="@+id/seekBarIso"
         android:orientation="horizontal">
 
         <RadioButton
@@ -59,7 +59,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/capture"
         android:layout_alignParentEnd="true"
-        android:max="7"
+        android:max="5"
         android:progress="1" />
 
     <Button
@@ -99,16 +99,17 @@
         android:id="@+id/textSS"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/capture"
-        android:layout_toStartOf="@+id/seekBarIso"
+        android:layout_above="@+id/btnConfig"
+        android:layout_alignParentEnd="true"
         android:text="" />
 
     <TextView
         android:id="@+id/textISO"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/capture"
-        android:layout_toStartOf="@+id/seekBarIso"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="109dp"
         android:text="" />
 
     <TextView
@@ -120,9 +121,9 @@
         android:text="SceneMode:" />
 
     <RadioGroup
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/seekBarIso"
+        android:layout_width="180dp"
+        android:layout_height="40dp"
+        android:layout_below="@+id/textureView"
         android:layout_toEndOf="@+id/capture"
         android:orientation="horizontal">
 
@@ -139,5 +140,21 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Mono" />
+
+        <RadioButton
+            android:id="@+id/Nscene"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="N" />
     </RadioGroup>
+
+    <Button
+        android:id="@+id/btnConfig"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_above="@+id/seekBarIso"
+        android:layout_alignParentEnd="true"
+        android:background="?android:attr/colorActivatedHighlight" />
+
 </RelativeLayout>
